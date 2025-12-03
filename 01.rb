@@ -1,21 +1,47 @@
 module Day01
   class Dial
-    attr_reader :current
+    attr_reader :current, :passes
 
     def initialize(range:, start:)
       @range = range.to_a
       @current = start
+      @passes = 0
     end
 
     def turn(value)
-      updated_value = normalize_value(@current + value)
-      @current = @range[updated_value]
+      # puts "rotating dial from #{@current} by #{value}"
+      update_passes! @current, value
+      update_current! @current + value
+      # puts "dial is now at #{@current} (passes: #{@passes})"
+      @current
     end
 
     private
 
-    def normalize_value(value)
-      value % @range.size
+    def update_current!(value)
+      normalized_value = value % @range.size
+      @current = @range[normalized_value]
+    end
+
+    def update_passes!(old_current, value)
+      if value.positive?
+        update_passes_right(old_current, value)
+      else
+        update_passes_left(old_current, value)
+      end
+    end
+
+    def update_passes_left(old_current, value)
+      full_rotations = (old_current + value).abs / @range.size
+      @passes += full_rotations
+      return if old_current.zero?
+      sign_changed = old_current * (old_current + value) <= 0
+      @passes += 1 if sign_changed
+    end
+
+    def update_passes_right(old_current, value)
+      full_rotations = (old_current + value) / @range.size
+      @passes += full_rotations
     end
   end
 
@@ -31,15 +57,22 @@ module Day01
       end
     end
 
+    def secure_password
+      @instructions.each(&method(:execute_instruction))
+      @dial.passes
+    end
+
     private
 
     def execute_instruction(instruction)
-      direction, value = instruction[0], instruction[1..].to_i
-      if direction == "L"
-        @dial.turn(-value)
-      else
-        @dial.turn(value)
-      end
+      @dial.turn parse_instruction(instruction)
+    end
+
+    # @param instruction [String]
+    def parse_instruction(instruction)
+      instruction.sub('L', '-')
+                 .sub('R', '')
+                 .to_i
     end
   end
 
@@ -51,7 +84,9 @@ module Day01
     end
 
     def part_two(input)
-      raise NotImplementedError
+      dial = Dial.new(range: 0..99, start: 50)
+      lock = Lock.new(dial: dial, instructions: input)
+      lock.secure_password
     end
   end
 end
