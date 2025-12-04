@@ -1,53 +1,56 @@
 module Day01
-  class Dial
-    attr_reader :current, :passes
-
-    def initialize(range:, start:)
-      @range = range.to_a
-      @current = start
-      @passes = 0
+  class Mobius
+    def initialize(range:, pointer:)
+      @range = range
+      @pointer = pointer
     end
 
-    def turn(value)
-      # puts "rotating dial from #{@current} by #{value}"
-      update_passes! @current, value
-      update_current! @current + value
-      # puts "dial is now at #{@current} (passes: #{@passes})"
-      @current
+    def right(steps)
+      walk(steps) do |next_pointer|
+        next_pointer = increment(next_pointer)
+        yield next_pointer if block_given?
+        @pointer = next_pointer
+      end
+    end
+
+    def left(steps)
+      walk(steps) do |next_pointer|
+        next_pointer = decrement(next_pointer)
+        yield next_pointer if block_given?
+        @pointer = next_pointer
+      end
     end
 
     private
 
-    def update_current!(value)
-      normalized_value = value % @range.size
-      @current = @range[normalized_value]
-    end
-
-    def update_passes!(old_current, value)
-      if value.positive?
-        update_passes_right(old_current, value)
-      else
-        update_passes_left(old_current, value)
+    def walk(steps)
+      steps.times.inject(@pointer) do |next_pointer, _step|
+        yield next_pointer
       end
     end
 
-    def update_passes_left(old_current, value)
-      full_rotations = (old_current + value).abs / @range.size
-      @passes += full_rotations
-      return if old_current.zero?
-      sign_changed = old_current * (old_current + value) <= 0
-      @passes += 1 if sign_changed
+    def increment(value)
+      value += 1
+      if value > @range.last
+        @range.first
+      else
+        value
+      end
     end
 
-    def update_passes_right(old_current, value)
-      full_rotations = (old_current + value) / @range.size
-      @passes += full_rotations
+    def decrement(value)
+      value -= 1
+      if value < @range.first
+        @range.last
+      else
+        value
+      end
     end
   end
 
   class Lock
-    def initialize(dial:, instructions:)
-      @dial = dial
+    def initialize(instructions:)
+      @mobius = Mobius.new(range: 0..99, pointer: 50)
       @instructions = instructions
     end
 
@@ -58,34 +61,50 @@ module Day01
     end
 
     def secure_password
-      @instructions.each(&method(:execute_instruction))
-      @dial.passes
+      @instructions.flat_map do |instruction|
+        numbers = []
+        execute_instruction(instruction) do |num|
+          numbers << num
+        end
+        numbers
+      end.count(0)
     end
 
     private
 
-    def execute_instruction(instruction)
-      @dial.turn parse_instruction(instruction)
+    def execute_instruction(instruction, &block)
+      method, steps = parse_instruction(instruction)
+      @mobius.send(method, steps, &block)
     end
 
     # @param instruction [String]
     def parse_instruction(instruction)
-      instruction.sub('L', '-')
-                 .sub('R', '')
-                 .to_i
+      [
+        parse_method(instruction),
+        parse_steps(instruction)
+      ]
+    end
+
+    def parse_method(instruction)
+      {
+        "R" => :right,
+        "L" => :left
+      }[instruction[0]]
+    end
+
+    def parse_steps(instruction)
+      instruction[1..].to_i
     end
   end
 
   class << self
     def part_one(input)
-      dial = Dial.new(range: 0..99, start: 50)
-      lock = Lock.new(dial: dial, instructions: input)
+      lock = Lock.new(instructions: input)
       lock.password
     end
 
     def part_two(input)
-      dial = Dial.new(range: 0..99, start: 50)
-      lock = Lock.new(dial: dial, instructions: input)
+      lock = Lock.new(instructions: input)
       lock.secure_password
     end
   end
