@@ -26,6 +26,27 @@ RSpec.describe Day03 do
         expect(bank.max_joltage).to eq 92
       end
     end
+
+    describe "#max_joltage with parameter of 12" do
+      fit "returns 987654321111 result for example 1" do
+        bank = Day03::Bank.from("987654321111111")
+        expect(bank.max_joltage(12)).to eq 987654321111
+      end
+
+      it "returns 811111111119 for the second example" do
+        bank = Day03::Bank.from("811111111111119")
+        expect(bank.max_joltage(12)).to eq 811111111119
+      end
+
+      it "returns 434234234278 for the third example" do
+        bank = Day03::Bank.from("234234234234278")
+        expect(bank.max_joltage(12)).to eq 434234234278
+      end
+      it "returns 888911112111 for the fourth example" do
+        bank = Day03::Bank.from("818181911112111")
+        expect(bank.max_joltage(12)).to eq 888911112111
+      end
+    end
   end
 
   context "part 1" do
@@ -37,9 +58,8 @@ RSpec.describe Day03 do
 
   context "part 2" do
     it "returns the correct answer for the example input" do
-      pending
       input = File.readlines("spec/test_inputs/03.txt", chomp: true)
-      expect(Day03.part_two(input)).to eq 0 # TODO: replace with correct answer
+      expect(Day03.part_two(input)).to eq 3121910778619
     end
   end
 end
