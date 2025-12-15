@@ -126,6 +126,47 @@ RSpec.describe Day04 do
           )
       end
     end
+
+    describe "remove!" do
+      it "returns a new Grid with the papers that can be removed, removed" do
+        grid = Day04::Grid.from([
+          ".@.",
+          "@..",
+          "..."
+        ])
+
+        new_grid = grid.remove!
+        expected_grid = Day04::Grid.from([
+          "...",
+          "...",
+          "..."
+        ])
+
+        expect(new_grid).to eq expected_grid
+      end
+    end
+
+    describe "removable_count" do
+      it "returns the number of removable paper rolls if there are any" do
+        grid = Day04::Grid.from([
+          ".@.",
+          "@..",
+          "..."
+        ])
+
+        expect(grid.removable_count).to eq 2
+      end
+
+      it "returns 0 when no rolls are removeable" do
+        grid = Day04::Grid.from([
+          "...",
+          "...",
+          "..."
+        ])
+
+        expect(grid.removable_count).to be_zero
+      end
+    end
   end
 
   context "part 1" do
@@ -137,9 +178,8 @@ RSpec.describe Day04 do
 
   context "part 2" do
     it "returns the correct answer for the example input" do
-      pending
       input = File.readlines("spec/test_inputs/04.txt", chomp: true)
-      expect(Day04.part_two(input)).to eq 0 # TODO: replace with correct answer
+      expect(Day04.part_two(input)).to eq 43
     end
   end
 end
